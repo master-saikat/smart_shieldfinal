@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMARTSHIELD — AI Powered Cyber Crime Detection</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --cyan:#00f5ff;--blue:#0080ff;--purple:#8b00ff;--red:#ff2244;
+    --cyan2:#00e5ff44;--glass:rgba(0,245,255,0.05);--glass2:rgba(0,128,255,0.08);
+  }
+  html{scroll-behavior:smooth;cursor:none}
+  body{background:#020408;color:#e0f0ff;font-family:'Exo 2',sans-serif;overflow-x:hidden}
+
+  /* Custom cursor */
+  #cursor{position:fixed;width:12px;height:12px;background:var(--cyan);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform 0.1s;box-shadow:0 0 15px var(--cyan),0 0 30px var(--cyan)}
+  #cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(0,245,255,0.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform 0.15s,width 0.3s,height 0.3s}
+
+  /* Nav */
+  nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:18px 60px;background:rgba(2,4,8,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,245,255,0.1)}
+  .logo{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:3px}
+  .nav-links{display:flex;gap:40px;align-items:center}
+  .nav-links a{color:rgba(200,230,255,0.7);text-decoration:none;font-size:14px;letter-spacing:1px;font-weight:600;transition:color 0.3s;text-transform:uppercase}
+  .nav-links a:hover{color:var(--cyan)}
+  .btn-create{padding:10px 24px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);border-radius:4px;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;position:relative;overflow:hidden;transition:all 0.4s;text-transform:uppercase}
+  .btn-create::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--cyan),var(--blue));opacity:0;transition:opacity 0.4s;z-index:-1}
+  .btn-create:hover{color:#000;box-shadow:0 0 30px var(--cyan),0 0 60px rgba(0,245,255,0.3);transform:scale(1.05)}
+  .btn-create:hover::before{opacity:1}
+
+  /* Hero */
+  #hero{min-height:100vh;position:relative;display:flex;align-items:center;padding:0 60px;overflow:hidden}
+  #hero-canvas{position:absolute;inset:0;z-index:0}
+  .hero-content{position:relative;z-index:2;max-width:600px}
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border:1px solid rgba(0,245,255,0.3);border-radius:20px;background:rgba(0,245,255,0.05);font-size:11px;font-family:'Share Tech Mono',monospace;color:var(--cyan);letter-spacing:2px;margin-bottom:24px}
+  .hero-badge span{width:6px;height:6px;background:var(--cyan);border-radius:50%;animation:pulse 2s infinite}
+  h1.hero-title{font-family:'Orbitron',monospace;font-size:clamp(32px,5vw,68px);font-weight:900;line-height:1.05;letter-spacing:-1px;margin-bottom:24px}
+  .hero-title .line1{display:block;color:#fff}
+  .hero-title .line2{display:block;background:linear-gradient(90deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .hero-title .line3{display:block;background:linear-gradient(90deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .hero-sub{font-size:16px;color:rgba(180,210,255,0.7);line-height:1.8;margin-bottom:36px;max-width:480px}
+  .btn-start{display:inline-flex;align-items:center;gap:10px;padding:15px 36px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#000;border:none;border-radius:4px;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all 0.4s;box-shadow:0 0 30px rgba(0,245,255,0.4),0 0 60px rgba(0,128,255,0.2);text-transform:uppercase}
+  .btn-start:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 0 50px rgba(0,245,255,0.6),0 0 100px rgba(0,128,255,0.3)}
+  .btn-start .arrow{transition:transform 0.3s}
+  .btn-start:hover .arrow{transform:translateX(5px)}
+
+  /* 3D Shield SVG area */
+  .hero-visual{position:absolute;right:-40px;top:50%;transform:translateY(-50%);width:620px;height:620px;z-index:1;pointer-events:none}
+  .shield-wrap{position:relative;width:100%;height:100%;animation:float 6s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0px) rotateY(0deg)}50%{transform:translateY(-20px) rotateY(5deg)}}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}
+  @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  @keyframes scanLine{0%{transform:translateY(-100%)}100%{transform:translateY(500%)}  }
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  @keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+
+  /* Alert cards floating */
+  .alert-card{position:absolute;background:rgba(2,4,8,0.9);border:1px solid;backdrop-filter:blur(10px);border-radius:8px;padding:12px 16px;font-size:12px;font-family:'Share Tech Mono',monospace;min-width:180px;animation:float2 4s ease-in-out infinite}
+  @keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .alert-card.red{border-color:rgba(255,34,68,0.6);box-shadow:0 0 20px rgba(255,34,68,0.2);animation-delay:-1s}
+  .alert-card.cyan{border-color:rgba(0,245,255,0.5);box-shadow:0 0 20px rgba(0,245,255,0.15)}
+  .alert-card.purple{border-color:rgba(139,0,255,0.6);box-shadow:0 0 20px rgba(139,0,255,0.2);animation-delay:-2s}
+  .card-label{font-size:10px;letter-spacing:2px;margin-bottom:4px}
+  .card-val{font-size:14px;font-weight:700}
+  .red .card-label{color:var(--red)}.red .card-val{color:#ff6680}
+  .cyan .card-label{color:var(--cyan)}.cyan .card-val{color:#80f5ff}
+  .purple .card-label{color:#bf40ff}.purple .card-val{color:#cf80ff}
+
+  /* Sections */
+  section{min-height:100vh;padding:100px 60px;position:relative;overflow:hidden}
+  .section-label{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px}
+  .section-title{font-family:'Orbitron',monospace;font-size:clamp(28px,4vw,52px);font-weight:900;line-height:1.1;margin-bottom:20px}
+  .section-sub{font-size:16px;color:rgba(180,210,255,0.65);line-height:1.8;max-width:520px;margin-bottom:50px}
+
+  /* Feature sections layout */
+  .feat-row{display:flex;align-items:center;gap:80px;min-height:70vh}
+  .feat-row.rev{flex-direction:row-reverse}
+  .feat-text{flex:1}
+  .feat-visual{flex:1;position:relative;height:420px}
+
+  /* Glass panels */
+  .glass-panel{background:var(--glass);border:1px solid rgba(0,245,255,0.15);border-radius:12px;backdrop-filter:blur(20px);padding:24px}
+  .glass-panel:hover{border-color:rgba(0,245,255,0.35);box-shadow:0 0 40px rgba(0,245,255,0.1)}
+  .feature-list{list-style:none;display:flex;flex-direction:column;gap:14px;margin-top:30px}
+  .feature-list li{display:flex;align-items:flex-start;gap:12px;font-size:14px;color:rgba(200,225,255,0.8)}
+  .feature-list li::before{content:'◈';color:var(--cyan);font-size:16px;flex-shrink:0;margin-top:1px}
+
+  /* Canvas-based visuals */
+  .visual-canvas{width:100%;height:100%;border-radius:12px}
+
+  /* Stats bar */
+  #stats{background:linear-gradient(180deg,transparent,rgba(0,245,255,0.03),transparent);padding:60px;border-top:1px solid rgba(0,245,255,0.1);border-bottom:1px solid rgba(0,245,255,0.1)}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:30px}
+  .stat-item{text-align:center}
+  .stat-num{font-family:'Orbitron',monospace;font-size:42px;font-weight:900;background:linear-gradient(180deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+  .stat-label{font-size:13px;color:rgba(180,210,255,0.6);letter-spacing:2px;margin-top:6px;text-transform:uppercase}
+
+  /* Grid lines bg */
+  .grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,245,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+
+  /* Neon divider */
+  .neon-divider{height:1px;background:linear-gradient(90deg,transparent,var(--cyan),var(--blue),var(--purple),transparent);margin:0;opacity:0.4}
+
+  /* CTA section */
+  #cta{text-align:center;padding:140px 60px;background:radial-gradient(ellipse at 50% 0%,rgba(0,128,255,0.08),transparent 70%)}
+  #cta .section-title{margin:0 auto 20px}
+  #cta .section-sub{margin:0 auto 50px}
+
+  /* Scan beam */
+  .scan-beam{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0.7;animation:scanLine 3s linear infinite}
+
+  /* Scrolled-in animations */
+  .reveal{opacity:0;transform:translateY(30px);transition:all 0.8s cubic-bezier(.16,1,.3,1)}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+
+  /* Particle container */
+  #particle-canvas{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.4}
+
+  /* Hologram text */
+  .holo{position:relative;display:inline-block}
+  .holo::after{content:attr(data-text);position:absolute;left:2px;top:2px;background:linear-gradient(90deg,var(--red),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;opacity:0.3;z-index:-1}
+
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:4px}
+  ::-webkit-scrollbar-track{background:#020408}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(var(--cyan),var(--blue))}
+
+  /* Mobile fallback */
+  @media(max-width:900px){
+    nav{padding:14px 20px}.nav-links a:not(.btn-create){display:none}
+    #hero,section{padding:80px 20px}
+    .hero-visual{display:none}.feat-row,.feat-row.rev{flex-direction:column;gap:40px}
+    .feat-visual{height:300px;width:100%}.stats-grid{grid-template-columns:repeat(2,1fr)}
+  }
+
+  /* Color helpers */
+  .c-red{color:var(--red)}.c-cyan{color:var(--cyan)}.c-purple{color:#bf40ff}.c-green{color:#00ff88}
+  .glow-cyan{text-shadow:0 0 20px var(--cyan)}
+  .glow-red{text-shadow:0 0 20px var(--red)}
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- Background particles -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- Navigation -->
+<nav id="navbar">
+  <div class="logo">SMARTSHIELD</div>
+  <div class="nav-links">
+    <a href="#hero">Home</a>
+    <a href="#about">About Us</a>
+    <a href="#features">Our Goal</a>
+   <a href="/api/register-page/" class="btn-create">
+  Create Account
+</a>
+  </div>
+</nav>
+
+<!-- HERO SECTION -->
+<section id="hero">
+  <div class="grid-bg"></div>
+  <canvas id="hero-canvas"></canvas>
+
+  <div class="hero-content reveal">
+    <div class="hero-badge"><span></span>SYSTEM ONLINE · THREAT LEVEL: MODERATE</div>
+    <h1 class="hero-title">
+      <span class="line1">AI POWERED</span>
+      <span class="line2">CYBER CRIME</span>
+      <span class="line3">DETECTION</span>
+    </h1>
+    <p class="hero-sub">SMARTSHIELD deploys next-generation AI to detect phishing attacks, financial fraud, malware intrusions, and social engineering threats — in real time, before damage occurs.</p>
+   <a href="/api/register-page/" class="btn-start">
+  Get Started <span class="arrow">→</span>
+</a>
+  </div>
+
+  <!-- Floating shield visual -->
+  <div class="hero-visual" id="hero-visual">
+    <div class="shield-wrap">
+      <canvas id="shield-canvas" width="620" height="620"></canvas>
+
+      <!-- Floating alert cards -->
+      <div class="alert-card red" style="top:18%;left:2%">
+        <div class="card-label">⚠ PHISHING DETECTED</div>
+        <div class="card-val">fake-bank-login.ru</div>
+      </div>
+      <div class="alert-card cyan" style="bottom:22%;left:-8%">
+        <div class="card-label">◈ AI SCAN ACTIVE</div>
+        <div class="card-val">99.7% Accuracy</div>
+      </div>
+      <div class="alert-card purple" style="top:12%;right:6%">
+        <div class="card-label">⬡ FRAUD BLOCKED</div>
+        <div class="card-val">$14,200 Saved</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- STATS -->
+<div id="stats">
+  <div class="stats-grid">
+    <div class="stat-item reveal"><div class="stat-num">99.7%</div><div class="stat-label">Detection Rate</div></div>
+    <div class="stat-item reveal"><div class="stat-num">2.4M+</div><div class="stat-label">Threats Blocked</div></div>
+    <div class="stat-item reveal"><div class="stat-num">0.003s</div><div class="stat-label">Response Time</div></div>
+    <div class="stat-item reveal"><div class="stat-num">180+</div><div class="stat-label">Countries Protected</div></div>
+  </div>
+</div>
+
+<div class="neon-divider"></div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="grid-bg"></div>
+  <div class="feat-row">
+    <div class="feat-text reveal">
+      <div class="section-label">About SmartShield</div>
+      <h2 class="section-title"><span class="c-cyan">Next-Gen</span><br>AI Defense Layer</h2>
+      <p class="section-sub">SmartShield is an AI-driven cybersecurity platform engineered to neutralize modern digital threats. Our neural detection engines monitor 1.2 billion events per second, identifying attack patterns invisible to conventional tools.</p>
+      <ul class="feature-list">
+        <li>Neural threat models trained on 50B+ attack signatures</li>
+        <li>Zero-day vulnerability detection with adaptive learning</li>
+        <li>Real-time behavioral anomaly scoring across all digital touchpoints</li>
+        <li>Federated AI — your data never leaves your perimeter</li>
+      </ul>
+    </div>
+    <div class="feat-visual reveal">
+      <canvas id="radar-canvas" class="visual-canvas"></canvas>
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- PHISHING DETECTION -->
+<section id="phishing" style="background:radial-gradient(ellipse at 80% 50%,rgba(255,34,68,0.04),transparent 60%)">
+  <div class="grid-bg"></div>
+  <div class="feat-row rev">
+    <div class="feat-text reveal">
+      <div class="section-label">Module 01</div>
+      <h2 class="section-title"><span class="c-red glow-red">Phishing</span><br>Detection</h2>
+      <p class="section-sub">AI models analyze URL structure, email headers, DOM content, and SSL certificates simultaneously — catching deceptive sites and emails with 99.8% precision.</p>
+      <ul class="feature-list">
+        <li>Deep URL pattern recognition across 400M+ known threats</li>
+        <li>Email header spoofing & DKIM anomaly detection</li>
+        <li>Real-time webpage visual similarity scoring</li>
+        <li>Spear-phishing & whaling campaign interception</li>
+      </ul>
+    </div>
+    <div class="feat-visual reveal">
+      <canvas id="phishing-canvas" class="visual-canvas"></canvas>
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- FINANCIAL FRAUD -->
+<section id="financial" style="background:radial-gradient(ellipse at 20% 50%,rgba(0,128,255,0.05),transparent 60%)">
+  <div class="grid-bg"></div>
+  <div class="feat-row">
+    <div class="feat-text reveal">
+      <div class="section-label">Module 02</div>
+      <h2 class="section-title"><span class="c-cyan">Financial</span><br>Fraud Detection</h2>
+      <p class="section-sub">Graph neural networks map transaction flows in real time, spotting money laundering schemes, card fraud, and account takeovers before a single dollar is lost.</p>
+      <ul class="feature-list">
+        <li>Transaction velocity & geolocation anomaly detection</li>
+        <li>GNN-based money laundering graph analysis</li>
+        <li>Synthetic identity fraud pattern matching</li>
+        <li>Sub-second card-not-present fraud scoring</li>
+      </ul>
+    </div>
+    <div class="feat-visual reveal">
+      <canvas id="finance-canvas" class="visual-canvas"></canvas>
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- MALWARE SCAN -->
+<section id="malware" style="background:radial-gradient(ellipse at 80% 50%,rgba(0,255,136,0.03),transparent 60%)">
+  <div class="grid-bg"></div>
+  <div class="feat-row rev">
+    <div class="feat-text reveal">
+      <div class="section-label">Module 03</div>
+      <h2 class="section-title"><span class="c-green">Malware &</span><br>Virus Scan</h2>
+      <p class="section-sub">Deep binary analysis and behavioral sandboxing detect polymorphic malware, ransomware payloads, and zero-day exploits — even when signatures don't yet exist.</p>
+      <ul class="feature-list">
+        <li>AI-powered PE/ELF binary static analysis</li>
+        <li>Dynamic sandboxed behavioral execution</li>
+        <li>Rootkit & kernel-level intrusion detection</li>
+        <li>Ransomware encryption pattern early warning</li>
+      </ul>
+    </div>
+    <div class="feat-visual reveal">
+      <canvas id="malware-canvas" class="visual-canvas"></canvas>
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- SOCIAL MEDIA FRAUD -->
+<section id="social" style="background:radial-gradient(ellipse at 20% 50%,rgba(139,0,255,0.05),transparent 60%)">
+  <div class="grid-bg"></div>
+  <div class="feat-row">
+    <div class="feat-text reveal">
+      <div class="section-label">Module 04</div>
+      <h2 class="section-title"><span class="c-purple">Social Media</span><br>Fraud Detection</h2>
+      <p class="section-sub">NLP and computer vision models expose fake profiles, coordinated inauthentic behavior, romance scams, and impersonation attacks across every major platform.</p>
+      <ul class="feature-list">
+        <li>Deepfake face detection in profile imagery</li>
+        <li>Coordinated bot network graph analysis</li>
+        <li>Romance & investment scam conversation patterns</li>
+        <li>Brand impersonation & verified-account spoofing</li>
+      </ul>
+    </div>
+    <div class="feat-visual reveal">
+      <canvas id="social-canvas" class="visual-canvas"></canvas>
+    </div>
+  </div>
+</section>
+
+<div class="neon-divider"></div>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="reveal">
+    <div class="section-label" style="text-align:center">Ready to Deploy</div>
+    <h2 class="section-title glow-cyan" style="text-align:center">Protect Your<br><span class="c-cyan">Digital World</span></h2>
+    <p class="section-sub" style="text-align:center;margin:0 auto 50px">Join 12,000+ organizations that trust SmartShield to guard their data, transactions, and communications around the clock.</p>
+    <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap">
+      <button class="btn-start">Start Free Trial →</button>
+      <button class="btn-create" style="padding:15px 36px;font-size:13px">Book a Demo</button>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="padding:40px 60px;border-top:1px solid rgba(0,245,255,0.1);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+  <div class="logo">SMARTSHIELD</div>
+  <div style="font-size:12px;color:rgba(180,210,255,0.4);font-family:'Share Tech Mono',monospace">© 2025 SMARTSHIELD · AI CYBER DEFENSE · ALL SYSTEMS NOMINAL</div>
+</footer>
+
+<script>
+// ─── Cursor ───────────────────────────────────────────────────
+const cursor=document.getElementById('cursor'),ring=document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+'px';cursor.style.top=my+'px'});
+setInterval(()=>{rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px'},16);
+document.querySelectorAll('button,a').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ring.style.width='60px';ring.style.height='60px';cursor.style.transform='translate(-50%,-50%) scale(1.5)'});
+  el.addEventListener('mouseleave',()=>{ring.style.width='36px';ring.style.height='36px';cursor.style.transform='translate(-50%,-50%) scale(1)'});
+});
+
+// ─── Particle canvas ─────────────────────────────────────────
+(function(){
+  const c=document.getElementById('particle-canvas');
+  const ctx=c.getContext('2d');
+  let W=c.width=window.innerWidth,H=c.height=window.innerHeight;
+  window.addEventListener('resize',()=>{W=c.width=window.innerWidth;H=c.height=window.innerHeight});
+  const particles=Array.from({length:120},()=>({
+    x:Math.random()*W,y:Math.random()*H,
+    vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,
+    r:Math.random()*1.5+.3,
+    col:Math.random()>.6?'rgba(0,245,255,':'rgba(0,128,255,'
+  }));
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.col+'0.8)';ctx.fill();
+    });
+    particles.forEach((a,i)=>{
+      particles.slice(i+1).forEach(b=>{
+        const d=Math.hypot(a.x-b.x,a.y-b.y);
+        if(d<120){
+          ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+          ctx.strokeStyle=`rgba(0,245,255,${0.08*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();
+        }
+      });
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── Hero canvas — digital grid + circuitry ──────────────────
+(function(){
+  const c=document.getElementById('hero-canvas');
+  const ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+  let t=0,mouseX=0,mouseY=0;
+  window.addEventListener('mousemove',e=>{mouseX=e.clientX/window.innerWidth;mouseY=e.clientY/window.innerHeight});
+  const nodes=Array.from({length:30},()=>({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.0003,vy:(Math.random()-.5)*.0003}));
+  function draw(){
+    t+=.005;
+    ctx.clearRect(0,0,c.width,c.height);
+    const W=c.width,H=c.height;
+    // Horizon glow
+    const g=ctx.createRadialGradient(W*.5+mouseX*40,H*.6,0,W*.5,H*.6,H*.7);
+    g.addColorStop(0,'rgba(0,128,255,0.04)');g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // Moving nodes/circuit
+    nodes.forEach(n=>{
+      n.x+=n.vx;n.y+=n.vy;
+      if(n.x<0||n.x>1)n.vx*=-1;if(n.y<0||n.y>1)n.vy*=-1;
+    });
+    nodes.forEach((a,i)=>{
+      nodes.slice(i+1).forEach(b=>{
+        const d=Math.hypot((a.x-b.x)*W,(a.y-b.y)*H);
+        if(d<180){
+          ctx.beginPath();ctx.moveTo(a.x*W,a.y*H);ctx.lineTo(b.x*W,b.y*H);
+          ctx.strokeStyle=`rgba(0,245,255,${.06*(1-d/180)})`;ctx.lineWidth=.5;ctx.stroke();
+        }
+      });
+      ctx.beginPath();ctx.arc(a.x*W,a.y*H,1.5,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,245,255,0.4)';ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── Shield canvas ────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('shield-canvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  const W=620,H=620,cx=W/2,cy=H/2;
+  let t=0,mx=0,my=0;
+  document.addEventListener('mousemove',e=>{mx=(e.clientX/window.innerWidth-.5)*2;my=(e.clientY/window.innerHeight-.5)*2});
+  function drawShield(tx,ty){
+    ctx.clearRect(0,0,W,H);
+    const ox=tx*18,oy=ty*12;
+    // Outer ring
+    for(let r=0;r<3;r++){
+      ctx.beginPath();
+      ctx.arc(cx+ox,cy+oy,220-r*12,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(0,245,255,${0.07+r*0.03})`;
+      ctx.lineWidth=1;ctx.setLineDash([4,8]);ctx.lineDashOffset=t*80;ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // Rotating rings
+    ctx.save();ctx.translate(cx+ox,cy+oy);ctx.rotate(t*.5);
+    ctx.beginPath();ctx.arc(0,0,180,0,Math.PI*2);
+    ctx.strokeStyle='rgba(0,128,255,0.15)';ctx.lineWidth=1.5;ctx.stroke();
+    for(let i=0;i<12;i++){
+      const a=i/12*Math.PI*2;
+      ctx.beginPath();ctx.arc(Math.cos(a)*180,Math.sin(a)*180,3,0,Math.PI*2);
+      ctx.fillStyle=i%3===0?'rgba(0,245,255,0.9)':'rgba(0,128,255,0.4)';ctx.fill();
+    }
+    ctx.restore();
+    ctx.save();ctx.translate(cx+ox,cy+oy);ctx.rotate(-t*.3);
+    ctx.beginPath();ctx.arc(0,0,155,0,Math.PI*2);
+    ctx.strokeStyle='rgba(139,0,255,0.12)';ctx.lineWidth=1;ctx.stroke();
+    ctx.restore();
+    // Shield body
+    ctx.save();ctx.translate(cx+ox,cy+oy);
+    // Glow
+    const sg=ctx.createRadialGradient(0,-20,10,0,-20,140);
+    sg.addColorStop(0,'rgba(0,200,255,0.18)');sg.addColorStop(.5,'rgba(0,100,255,0.08)');sg.addColorStop(1,'rgba(0,0,80,0.04)');
+    ctx.beginPath();
+    ctx.moveTo(0,-130);ctx.bezierCurveTo(90,-130,110,-60,110,20);ctx.bezierCurveTo(110,90,60,140,0,165);
+    ctx.bezierCurveTo(-60,140,-110,90,-110,20);ctx.bezierCurveTo(-110,-60,-90,-130,0,-130);
+    ctx.fillStyle=sg;ctx.fill();
+    // Border
+    const sb=ctx.createLinearGradient(-110,-130,110,165);
+    sb.addColorStop(0,'rgba(0,245,255,0.9)');sb.addColorStop(.5,'rgba(0,128,255,0.6)');sb.addColorStop(1,'rgba(139,0,255,0.8)');
+    ctx.strokeStyle=sb;ctx.lineWidth=2;ctx.stroke();
+    // Inner glow
+    ctx.shadowColor='rgba(0,245,255,0.6)';ctx.shadowBlur=20;ctx.stroke();ctx.shadowBlur=0;
+    // Check mark / AI symbol
+    ctx.beginPath();ctx.moveTo(-30,10);ctx.lineTo(-10,30);ctx.lineTo(40,-20);
+    ctx.strokeStyle='rgba(0,245,255,0.9)';ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
+    ctx.shadowColor='rgba(0,245,255,1)';ctx.shadowBlur=15;ctx.stroke();ctx.shadowBlur=0;
+    ctx.restore();
+    // Scan beam
+    const scanY=((Math.sin(t*2)+1)/2)*(H);
+    const beamG=ctx.createLinearGradient(0,scanY-2,0,scanY+2);
+    beamG.addColorStop(0,'transparent');beamG.addColorStop(.5,'rgba(0,245,255,0.5)');beamG.addColorStop(1,'transparent');
+    ctx.fillStyle=beamG;ctx.fillRect(cx+ox-200,scanY,400,4);
+    // Corner brackets
+    const bx=cx+ox,by=cy+oy,s=150;
+    ctx.strokeStyle='rgba(0,245,255,0.3)';ctx.lineWidth=1.5;ctx.setLineDash([]);
+    [[bx-s,by-s,1,1],[bx+s,by-s,-1,1],[bx-s,by+s,1,-1],[bx+s,by+s,-1,-1]].forEach(([x,y,dx,dy])=>{
+      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+dx*20,y);ctx.moveTo(x,y);ctx.lineTo(x,y+dy*20);ctx.stroke();
+    });
+  }
+  function animate(){t+=.008;drawShield(mx,my);requestAnimationFrame(animate)}
+  animate();
+})();
+
+// ─── Radar canvas ─────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('radar-canvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  function resize(){c.width=c.parentElement.offsetWidth;c.height=c.parentElement.offsetHeight}
+  resize();new ResizeObserver(resize).observe(c.parentElement);
+  let t=0;
+  const threats=[
+    {a:.3,r:.5,col:'rgba(255,34,68,',label:'Malware'},
+    {a:1.2,r:.7,col:'rgba(255,150,0,',label:'Phishing'},
+    {a:2.5,r:.4,col:'rgba(139,0,255,',label:'Bot'},
+    {a:3.8,r:.6,col:'rgba(255,34,68,',label:'DDoS'},
+    {a:5.1,r:.5,col:'rgba(0,245,255,',label:'Scan'},
+  ];
+  function draw(){
+    t+=.015;
+    ctx.clearRect(0,0,c.width,c.height);
+    const cx=c.width/2,cy=c.height/2,R=Math.min(cx,cy)*.85;
+    // Rings
+    for(let r=1;r<=4;r++){
+      ctx.beginPath();ctx.arc(cx,cy,R*r/4,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(0,245,255,${0.08+r*.02})`;ctx.lineWidth=1;ctx.stroke();
+    }
+    // Cross hairs
+    ctx.strokeStyle='rgba(0,245,255,0.08)';ctx.lineWidth=.5;
+    for(let a=0;a<8;a++){
+      const ang=a*Math.PI/4;
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);ctx.stroke();
+    }
+    // Sweep
+    const sg=ctx.createConicalGradient?null:null;
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(t);
+    const sw=ctx.createLinearGradient(0,0,R,0);
+    sw.addColorStop(0,'rgba(0,245,255,0.5)');sw.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R,-.3,.0);ctx.closePath();
+    ctx.fillStyle='rgba(0,245,255,0.07)';ctx.fill();
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(R,0);
+    ctx.strokeStyle='rgba(0,245,255,0.6)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.restore();
+    // Blips
+    threats.forEach(th=>{
+      const ang=th.a+t*.5;
+      const x=cx+Math.cos(ang)*th.r*R;
+      const y=cy+Math.sin(ang)*th.r*R;
+      // Trail
+      ctx.beginPath();ctx.arc(x,y,6+Math.sin(t*4)*3,0,Math.PI*2);
+      ctx.fillStyle=th.col+'0.1)';ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);
+      ctx.fillStyle=th.col+'0.9)';ctx.fill();
+      ctx.shadowColor=th.col+'1)';ctx.shadowBlur=10;ctx.fill();ctx.shadowBlur=0;
+      // Label
+      ctx.fillStyle='rgba(200,230,255,0.7)';ctx.font='10px Share Tech Mono,monospace';
+      ctx.fillText(th.label,x+8,y-4);
+    });
+    // Center
+    ctx.beginPath();ctx.arc(cx,cy,6,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,245,255,0.8)';ctx.fill();
+    ctx.shadowColor='rgba(0,245,255,1)';ctx.shadowBlur=15;ctx.fill();ctx.shadowBlur=0;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── Phishing canvas ──────────────────────────────────────────
+(function(){
+  const c=document.getElementById('phishing-canvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  function resize(){c.width=c.parentElement.offsetWidth;c.height=c.parentElement.offsetHeight}
+  resize();new ResizeObserver(resize).observe(c.parentElement);
+  let t=0;
+  const emails=[
+    {y:.2,x:.15,label:'phake-paypal.com',danger:true},
+    {y:.4,x:.1,label:'bank-secure-login.ru',danger:true},
+    {y:.6,x:.2,label:'newsletter@legit.co',danger:false},
+    {y:.75,x:.12,label:'invoice_2025.exe',danger:true},
+  ];
+  function draw(){
+    t+=.008;
+    ctx.clearRect(0,0,c.width,c.height);
+    const W=c.width,H=c.height;
+    // Laptop outline
+    const lw=W*.6,lh=lw*.55,lx=(W-lw)/2,ly=(H-lh)/2-20;
+    ctx.beginPath();
+    ctx.roundRect(lx,ly,lw,lh,8);
+    ctx.strokeStyle='rgba(255,34,68,0.5)';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='rgba(255,34,68,0.04)';ctx.fill();
+    // Screen content lines
+    for(let i=0;i<5;i++){
+      ctx.fillStyle=`rgba(255,${80+i*20},${80+i*20},0.2)`;
+      ctx.fillRect(lx+20,ly+20+i*22,lw-40,10);
+    }
+    // Big alert symbol
+    ctx.font='bold 42px Arial';ctx.textAlign='center';
+    ctx.fillStyle='rgba(255,34,68,0.8)';
+    ctx.shadowColor='rgba(255,34,68,0.8)';ctx.shadowBlur=20;
+    ctx.fillText('⚠',W/2,ly+lh*.55);ctx.shadowBlur=0;
+    // Alert text
+    ctx.font='bold 12px Orbitron,monospace';
+    ctx.fillStyle='rgba(255,80,100,0.9)';ctx.fillText('PHISHING DETECTED',W/2,ly+lh*.75);
+    // Keyboard base
+    ctx.beginPath();ctx.roundRect(lx-20,ly+lh,lw+40,12,4);
+    ctx.strokeStyle='rgba(255,34,68,0.2)';ctx.lineWidth=1;ctx.stroke();
+    // Floating email cards
+    emails.forEach((em,i)=>{
+      const ex=em.x*W+Math.sin(t+i)*(W*.03);
+      const ey=em.y*H+Math.cos(t*1.3+i)*(H*.02);
+      ctx.beginPath();ctx.roundRect(ex,ey,160,32,4);
+      ctx.fillStyle=em.danger?'rgba(255,34,68,0.1)':'rgba(0,245,255,0.05)';ctx.fill();
+      ctx.strokeStyle=em.danger?'rgba(255,34,68,0.5)':'rgba(0,245,255,0.3)';ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle=em.danger?'rgba(255,100,100,.9)':'rgba(100,245,255,.8)';
+      ctx.font='10px Share Tech Mono,monospace';ctx.textAlign='left';
+      ctx.fillText((em.danger?'✗ ':'✓ ')+em.label,ex+8,ey+20);
+    });
+    ctx.textAlign='center';
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── Finance canvas ───────────────────────────────────────────
+(function(){
+  const c=document.getElementById('finance-canvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  function resize(){c.width=c.parentElement.offsetWidth;c.height=c.parentElement.offsetHeight}
+  resize();new ResizeObserver(resize).observe(c.parentElement);
+  let t=0;
+  const txns=[
+    {amt:'$14,200',flag:true,from:'JP→RU',time:'00:03'},
+    {amt:'$847',flag:false,from:'US→UK',time:'00:11'},
+    {amt:'$52,000',flag:true,from:'CN→SY',time:'00:18'},
+    {amt:'$320',flag:false,from:'DE→FR',time:'00:24'},
+  ];
+  function draw(){
+    t+=.008;
+    ctx.clearRect(0,0,c.width,c.height);
+    const W=c.width,H=c.height;
+    // Chart bars
+    const vals=[40,75,55,90,35,65,85,45,70,95];
+    const bw=(W*.7-20)/(vals.length*1.5);
+    vals.forEach((v,i)=>{
+      const bx=W*.15+i*(bw*1.5);
+      const bh=v/100*(H*.4);
+      const by=H*.55-bh;
+      const grad=ctx.createLinearGradient(0,by,0,by+bh);
+      grad.addColorStop(0,'rgba(0,245,255,0.8)');grad.addColorStop(1,'rgba(0,128,255,0.2)');
+      ctx.fillStyle=i===7?'rgba(255,34,68,0.7)':grad;
+      ctx.fillRect(bx,by,bw,bh);
+      if(i===7){
+        ctx.fillStyle='rgba(255,34,68,.3)';
+        ctx.font='9px Share Tech Mono,monospace';ctx.textAlign='center';
+        ctx.fillText('FLAG',bx+bw/2,by-6);
+      }
+    });
+    // X axis
+    ctx.beginPath();ctx.moveTo(W*.12,H*.55);ctx.lineTo(W*.88,H*.55);
+    ctx.strokeStyle='rgba(0,245,255,0.2)';ctx.lineWidth=1;ctx.stroke();
+    // Transaction list
+    txns.forEach((tx,i)=>{
+      const ty=H*.65+i*36;
+      ctx.beginPath();ctx.roundRect(W*.05,ty,W*.9,28,4);
+      ctx.fillStyle=tx.flag?'rgba(255,34,68,0.08)':'rgba(0,245,255,0.04)';ctx.fill();
+      ctx.strokeStyle=tx.flag?'rgba(255,34,68,0.4)':'rgba(0,245,255,0.15)';ctx.lineWidth=.5;ctx.stroke();
+      ctx.fillStyle=tx.flag?'rgba(255,100,100,.9)':'rgba(100,245,255,.8)';
+      ctx.font='11px Share Tech Mono,monospace';ctx.textAlign='left';
+      ctx.fillText((tx.flag?'⚠ ':'◈ ')+tx.from+' '+tx.amt,W*.08,ty+18);
+      ctx.textAlign='right';
+      ctx.fillStyle='rgba(180,210,255,.5)';ctx.font='10px Share Tech Mono,monospace';
+      ctx.fillText(tx.time,W*.93,ty+18);
+    });
+    ctx.textAlign='left';
+    // Coin floating
+    for(let i=0;i<4;i++){
+      const cx2=W*.1+i*(W*.22)+Math.sin(t*1.2+i)*10;
+      const cy2=H*.12+Math.cos(t+i*.8)*8;
+      ctx.beginPath();ctx.arc(cx2,cy2,12,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,200,0,0.15)';ctx.fill();
+      ctx.strokeStyle='rgba(255,200,0,0.5)';ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle='rgba(255,200,0,0.8)';ctx.font='10px Arial';ctx.textAlign='center';
+      ctx.fillText('$',cx2,cy2+4);
+    }
+    ctx.textAlign='left';
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── Malware canvas ───────────────────────────────────────────
+(function(){
+  const c=document.getElementById('malware-canvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  function resize(){c.width=c.parentElement.offsetWidth;c.height=c.parentElement.offsetHeight}
+  resize();new ResizeObserver(resize).observe(c.parentElement);
+  let t=0;
+  const viruses=Array.from({length:14},()=>({
+    x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.003,vy:(Math.random()-.5)*.003,
+    r:Math.random()*3+2,killed:false,killT:Math.random()*Math.PI*2
+  }));
+  function draw(){
+    t+=.01;
+    ctx.clearRect(0,0,c.width,c.height);
+    const W=c.width,H=c.height;
+    // Shield scan ring
+    const scanR=120+Math.sin(t)*20;
+    const sg=ctx.createRadialGradient(W/2,H/2,scanR-3,W/2,H/2,scanR+3);
+    sg.addColorStop(0,'transparent');sg.addColorStop(.5,'rgba(0,255,136,0.4)');sg.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(W/2,H/2,scanR,0,Math.PI*2);
+    ctx.strokeStyle='rgba(0,255,136,0.6)';ctx.lineWidth=2;ctx.stroke();
+    // Inner glow
+    const ig=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,scanR);
+    ig.addColorStop(0,'rgba(0,255,136,0.05)');ig.addColorStop(1,'transparent');
+    ctx.fillStyle=ig;ctx.beginPath();ctx.arc(W/2,H/2,scanR,0,Math.PI*2);ctx.fill();
+    // Rings
+    for(let r=1;r<=3;r++){
+      ctx.beginPath();ctx.arc(W/2,H/2,40*r,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(0,255,136,${0.08+r*.02})`;ctx.lineWidth=.5;ctx.setLineDash([3,5]);ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // Shield icon in center
+    ctx.save();ctx.translate(W/2,H/2);
+    ctx.beginPath();ctx.moveTo(0,-40);ctx.bezierCurveTo(30,-40,36,-18,36,6);ctx.bezierCurveTo(36,28,20,44,0,52);
+    ctx.bezierCurveTo(-20,44,-36,28,-36,6);ctx.bezierCurveTo(-36,-18,-30,-40,0,-40);
+    ctx.fillStyle='rgba(0,255,136,0.1)';ctx.fill();
+    ctx.strokeStyle='rgba(0,255,136,0.8)';ctx.lineWidth=2;ctx.stroke();
+    ctx.shadowColor='rgba(0,255,136,1)';ctx.shadowBlur=15;ctx.stroke();ctx.shadowBlur=0;
+    ctx.beginPath();ctx.moveTo(-12,4);ctx.lineTo(-4,14);ctx.lineTo(14,-8);
+    ctx.strokeStyle='rgba(0,255,136,1)';ctx.lineWidth=3;ctx.lineCap='round';ctx.stroke();
+    ctx.restore();
+    // Virus particles
+    viruses.forEach(v=>{
+      v.x+=v.vx;v.y+=v.vy;
+      if(v.x<0||v.x>1)v.vx*=-1;if(v.y<0||v.y>1)v.vy*=-1;
+      const vx=v.x*W,vy=v.y*H;
+      const dist=Math.hypot(vx-W/2,vy-H/2);
+      const killed=dist<scanR;
+      ctx.beginPath();ctx.arc(vx,vy,v.r,0,Math.PI*2);
+      ctx.fillStyle=killed?'rgba(0,255,136,0.5)':'rgba(255,50,50,0.8)';ctx.fill();
+      if(!killed){
+        ctx.strokeStyle='rgba(255,50,50,0.4)';ctx.lineWidth=3;ctx.stroke();
+        ctx.beginPath();
+        for(let s=0;s<6;s++){const a=s/6*Math.PI*2;ctx.moveTo(vx,vy);ctx.lineTo(vx+Math.cos(a)*8,vy+Math.sin(a)*8)}
+        ctx.strokeStyle='rgba(255,50,50,0.25)';ctx.lineWidth=1;ctx.stroke();
+      }
+    });
+    // Scan percentage
+    const pct=Math.min(100,Math.floor((t*3)%101));
+    ctx.fillStyle='rgba(0,255,136,0.8)';ctx.font='bold 13px Orbitron,monospace';ctx.textAlign='center';
+    ctx.fillText(`SCANNING... ${pct}%`,W/2,H*.88);
+    ctx.textAlign='left';
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── Social canvas ────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('social-canvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  function resize(){c.width=c.parentElement.offsetWidth;c.height=c.parentElement.offsetHeight}
+  resize();new ResizeObserver(resize).observe(c.parentElement);
+  let t=0;
+  const nodes=[
+    {x:.5,y:.35,real:false,label:'FakeID_Bot'},
+    {x:.25,y:.25,real:true,label:'User_A'},
+    {x:.75,y:.2,real:true,label:'User_B'},
+    {x:.2,y:.55,real:true,label:'User_C'},
+    {x:.8,y:.5,real:false,label:'Scammer'},
+    {x:.5,y:.65,real:true,label:'User_D'},
+  ];
+  const edges=[[0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[4,5]];
+  function draw(){
+    t+=.008;
+    ctx.clearRect(0,0,c.width,c.height);
+    const W=c.width,H=c.height;
+    // Edges
+    edges.forEach(([a,b])=>{
+      const na=nodes[a],nb=nodes[b];
+      ctx.beginPath();ctx.moveTo(na.x*W,na.y*H+H*.05);ctx.lineTo(nb.x*W,nb.y*H+H*.05);
+      ctx.strokeStyle=(!na.real||!nb.real)?'rgba(255,34,68,0.3)':'rgba(0,245,255,0.15)';
+      ctx.lineWidth=1;ctx.stroke();
+    });
+    // Nodes
+    nodes.forEach((n,i)=>{
+      const nx=n.x*W+Math.sin(t+i)*(W*.01);
+      const ny=n.y*H+H*.05+Math.cos(t*.8+i)*(H*.01);
+      const pulse=Math.sin(t*2+i)*4;
+      // Glow
+      ctx.beginPath();ctx.arc(nx,ny,18+pulse,0,Math.PI*2);
+      ctx.fillStyle=n.real?'rgba(0,245,255,0.05)':'rgba(255,34,68,0.1)';ctx.fill();
+      // Node
+      ctx.beginPath();ctx.arc(nx,ny,12,0,Math.PI*2);
+      ctx.fillStyle=n.real?'rgba(0,100,200,0.6)':'rgba(180,0,0,0.6)';ctx.fill();
+      ctx.strokeStyle=n.real?'rgba(0,245,255,0.7)':'rgba(255,34,68,0.9)';
+      ctx.lineWidth=1.5;ctx.stroke();
+      ctx.shadowColor=n.real?'rgba(0,245,255,1)':'rgba(255,34,68,1)';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
+      // Avatar symbol
+      ctx.fillStyle=n.real?'rgba(0,245,255,0.9)':'rgba(255,80,100,0.9)';
+      ctx.font='10px Arial';ctx.textAlign='center';
+      ctx.fillText(n.real?'👤':'⚠',nx,ny+4);
+      // Label
+      ctx.fillStyle=n.real?'rgba(100,200,255,0.7)':'rgba(255,100,120,0.8)';
+      ctx.font='9px Share Tech Mono,monospace';ctx.textAlign='center';
+      ctx.fillText(n.label,nx,ny+26);
+    });
+    // Detection banner
+    ctx.beginPath();ctx.roundRect(W*.1,H*.82,W*.8,36,4);
+    ctx.fillStyle='rgba(255,34,68,0.1)';ctx.fill();
+    ctx.strokeStyle='rgba(255,34,68,0.4)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='rgba(255,100,120,0.9)';ctx.font='11px Orbitron,monospace';ctx.textAlign='center';
+    ctx.fillText('⚠  FAKE PROFILES DETECTED: 2  ⚠',W/2,H*.82+23);
+    ctx.textAlign='left';
+    // Lock icons floating
+    for(let i=0;i<3;i++){
+      const lx=W*.15+i*(W*.3)+Math.sin(t+i*1.5)*8;
+      const ly=H*.07+Math.cos(t*.7+i)*6;
+      ctx.fillStyle='rgba(139,0,255,0.7)';ctx.font='16px Arial';ctx.textAlign='center';
+      ctx.fillText('🔒',lx,ly);
+    }
+    ctx.textAlign='left';
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── Scroll reveal ────────────────────────────────────────────
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target)}});
+},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ─── Mouse tilt on feature visuals ───────────────────────────
+document.querySelectorAll('.feat-visual').forEach(el=>{
+  document.addEventListener('mousemove',e=>{
+    const rect=el.getBoundingClientRect();
+    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+    const dx=(e.clientX-cx)/rect.width,dy=(e.clientY-cy)/rect.height;
+    el.style.transform=`perspective(800px) rotateY(${dx*6}deg) rotateX(${-dy*4}deg)`;
+    el.style.transition='transform 0.1s';
+  });
+});
+
+// ─── Nav scroll effect ────────────────────────────────────────
+window.addEventListener('scroll',()=>{
+  const n=document.getElementById('navbar');
+  n.style.background=window.scrollY>50?'rgba(2,4,8,0.97)':'rgba(2,4,8,0.85)';
+});
+
+// ─── Alert cards mouse parallax ──────────────────────────────
+document.addEventListener('mousemove',e=>{
+  const mx=(e.clientX/window.innerWidth-.5)*20;
+  const my=(e.clientY/window.innerHeight-.5)*20;
+  document.querySelectorAll('.alert-card').forEach((card,i)=>{
+    card.style.transform=`translate(${mx*(i%2===0?1:-1)*.5}px,${my*.4}px)`;
+  });
+});
+</script>
+</body>
+</html>
